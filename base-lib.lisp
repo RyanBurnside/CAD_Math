@@ -96,3 +96,41 @@
 ;defun point-in-thick-line (useful for picking lines)
 ;defun point-in-polygon (useful for picking polygons)
 
+;;; Line segment intersection, adapted from 
+;;; http://thirdpartyninjas.com/blog/2008/10/07/line-segment-intersection/
+
+
+;; TODO check comment on the algorithm:
+;; Jesse, this is great stuff. Combined with the separating axis theorem it is
+;; beginning’s of a good collision detection and response system. I’d like to 
+;; make a small correction to the math above. The factor (x1-x3) in the final 
+;; solution for Ua and Ub, should be (x3-x1). Cheers!
+
+;; TODO has division by 0 bug in UA and UB calculations
+(defun line-segment-intersection (x1 y1 x2 y2 x3 y3 x4 y4)
+  (let* ((a (- x4 x3))
+	 (b (- y1 y3))
+	 (c (- y4 y3))
+	 (d (- x1 x3))
+	 (e (- x2 x1))
+	 (f (- y2 y1))
+	 (denom (- (* c e) (* a f)))
+	 (ua-numerator (- (* a b) (* c d)))
+	 (ub-numerator (- (* e b) (* f d)))
+	 (UA (/ ua-numerator denom))
+	 (UB (/ ub-numerator denom)))
+    ;; If denominator is 0 they are parallel lines
+    (if (= 0 denom)
+	(return-from line-segment-intersection nil))
+    ;; If both numerators are 0 lines are same
+    (if (and (= 0 ua-numerator) (= 0 ub-numerator))
+	(return-from line-segment-intersection nil))
+    ;; Find intersection if they cross
+    (if (and (<= 0.0 UA) (<= 0.0 UB) (<= UA 1.0) (<= UB 1.0))
+	(return-from line-segment-intersection
+	  (list (+ x1 (- (* UA x2) (* UA x1)))
+		(+ y1 (- (* UA y2) (* UA y1))))))
+    ;; Default to NIL
+    nil))
+
+ 
