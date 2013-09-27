@@ -3,10 +3,10 @@
 
 ;;; Unit conversions
 (defun degrees-to-radians (degrees)
-  (* degrees 0.017453))
+  (* degrees (/ pi 180.0)))
 
 (defun radians-to-degrees (radians)
-  (* radians 57.2957795))
+  (* radians (/ 180.0 pi)))
 
 ;;; Linear Operations
 (defun solve-x (y1 mx1 b1 y2 mx2 b2)
@@ -50,6 +50,7 @@
 ;;; Circular / Arc operations
 ;;  Unless specified these opreations return a circle in the form 
 ;;  (center-x center-y radius)
+
 (defun 1-point-circle(x y radius)
   "Really dumb but here for consistancy"
   (list x y radius))
@@ -60,10 +61,6 @@
 	 (center-x (car m))
 	 (center-y (cadr m)))
     (list center-x center-y (abs (distance center-x center-y x2 y2)))))
-
-;(defun 3-point-circle(x y x2 y2 x3 y3)
-;  "Find a circle that goes through 3 points"
-;  (let ((delta-1 (
 
 ;;; Polyline/Ngon operations
 ;;; Note that 'in' means within a border of a shape
@@ -99,15 +96,9 @@
 ;;; Line segment intersection, adapted from 
 ;;; http://thirdpartyninjas.com/blog/2008/10/07/line-segment-intersection/
 
-
-;; TODO check comment on the algorithm:
-;; Jesse, this is great stuff. Combined with the separating axis theorem it is
-;; beginning’s of a good collision detection and response system. I’d like to 
-;; make a small correction to the math above. The factor (x1-x3) in the final 
-;; solution for Ua and Ub, should be (x3-x1). Cheers!
-
-;; TODO has division by 0 bug in UA and UB calculations
+;; Does not count shared endpoints as intersections (fix later?)
 (defun line-segment-intersection (x1 y1 x2 y2 x3 y3 x4 y4)
+"Tests line (p1 p2)  against (p3 p4)"
   (let* ((a (- x4 x3))
 	 (b (- y1 y3))
 	 (c (- y4 y3))
@@ -117,20 +108,21 @@
 	 (denom (- (* c e) (* a f)))
 	 (ua-numerator (- (* a b) (* c d)))
 	 (ub-numerator (- (* e b) (* f d)))
-	 (UA (/ ua-numerator denom))
-	 (UB (/ ub-numerator denom)))
+	 (UA nil)
+	 (UB nil))
+
     ;; If denominator is 0 they are parallel lines
     (if (= 0 denom)
 	(return-from line-segment-intersection nil))
-    ;; If both numerators are 0 lines are same
-    (if (and (= 0 ua-numerator) (= 0 ub-numerator))
-	(return-from line-segment-intersection nil))
+	
+    ;; It is OK to divide by denom now since it is not 0 at this point.
+    (setf UA (/ ua-numerator denom))
+    (setf UB (/ ub-numerator denom))
+    
     ;; Find intersection if they cross
-    (if (and (<= 0.0 UA) (<= 0.0 UB) (<= UA 1.0) (<= UB 1.0))
+    (if (and (<= 0 UA) (<= 0 UB) (<= UA 1) (<= UB 1))
 	(return-from line-segment-intersection
-	  (list (+ x1 (- (* UA x2) (* UA x1)))
-		(+ y1 (- (* UA y2) (* UA y1))))))
+	  (list  (+ x1 (- (* UA x2) (* UA x1)))
+		 (+ y1 (- (* UA y2) (* UA y1))))))
     ;; Default to NIL
     nil))
-
- 
